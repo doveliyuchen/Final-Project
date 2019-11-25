@@ -1,18 +1,19 @@
 let blo
 let play
+let fallingBlock
 
 function setup() {
 
   play = new Playfield(20, 10)
   createCanvas(windowWidth, windowHeight);
   blo = new Block(1)
-  //spawnNewPiece();
+  newBlock();
 }
 
 function draw() {
   // 
   // 
-  play.show();
+  play.display();
   blo.display();
 }
 
@@ -23,27 +24,40 @@ function mouseDragged() {
   blo.display();
 
 }
+function newBlock() {
+	if (fallingBlock) {
+		playfield.addToGrid(fallingBlock);
+	}
+	
+	const block = ['1', '2', '3', '4']
+	const choice = random(block);
+	fallingBlock = new Block(choice, playfield);
+	
+	redraw();
 
+}
 class Block {
 
-  constructor(a) {
-    this.a = a;
-
+  constructor(type, playfield) {
+    this.type = type;
+    this.cellSize = 44;
 
   }
   display() {
-    if (this.a === 1) {
-      rect(0, 0, 50, 50)
-    } else if (this.a === 2) {
-      rect(0, 0, 50, 100)
+    if (this.type === 1) {
+      rect(0, 0, this.cellSize, this.cellSize)
+    } else if (this.type === 2) {
+      rect(0, 0, this.cellSize, 2*this.cellSize)
 
-    } else if (this.a === 3) {
-      rect(0, 0, 50, 150)
+    } else if (this.type === 3) {
+      rect(0, 0, this.cellSize, 3*this.cellSize)
+    } else if (this.type === 3) {
+      rect(0, 0, this.cellSize, 4*this.cellSize)
     }
 
   }
 
-
+//will replace it by cell size
 }
 
 class Playfield {
@@ -67,9 +81,9 @@ class Playfield {
     this.gridlines = true;
   }
 
+addToGrid(block) {
 
-
-
+}
   gengXin() {
     for (let i = 0; i < this.rows; i++) {
       this.ge[i] = new Array(this.cols).fill(this.foreground);
@@ -77,7 +91,7 @@ class Playfield {
   }
 
 
-  show() {
+  display() {
     // Draw the border and gridlines	
     let bs = this.borderSize
     let cs = this.cellSize
