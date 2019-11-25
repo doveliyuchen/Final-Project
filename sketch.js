@@ -36,29 +36,7 @@ function newBlock() {
 	redraw();
 
 }
-class Block {
 
-  constructor(type, playfield) {
-    this.type = type;
-    this.cellSize = 44;
-
-  }
-  display() {
-    if (this.type === 1) {
-      rect(0, 0, this.cellSize, this.cellSize)
-    } else if (this.type === 2) {
-      rect(0, 0, this.cellSize, 2*this.cellSize)
-
-    } else if (this.type === 3) {
-      rect(0, 0, this.cellSize, 3*this.cellSize)
-    } else if (this.type === 3) {
-      rect(0, 0, this.cellSize, 4*this.cellSize)
-    }
-
-  }
-
-//will replace it by cell size
-}
 
 class Playfield {
 
@@ -119,7 +97,33 @@ addToGrid(block) {
       }
     }
 
-  } // end of show()
+  } // end of display()
 
 
+}
+
+class Block {
+
+  constructor(type, playfield) {
+    this.type = type;
+    this.playfield= play
+    //this.cellSize = playfield.cellSize;
+    //this.boardSize = playfield.boardSize;
+  }
+  display() {
+    if (this.type === 1) {
+      rect(0, 0, this.cellSize, this.cellSize)
+    } else if (this.type === 2) {
+      rect(0, 0, this.cellSize, 2*this.cellSize)
+
+    } else if (this.type === 3) {
+      rect(0, 0, this.cellSize, 3*this.cellSize)
+    } else if (this.type === 4) {
+      rect(0, 0, this.cellSize, 4*this.cellSize)
+    }
+
+  }
+  
+
+//will replace it by cell size
 }
