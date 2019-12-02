@@ -1,41 +1,89 @@
-let blo
-let play
+let prev, paused
+let pla
 let fallingBlock
 
 function setup() {
 
-  play = new Playfield(20, 10)
+  pla = new Playfield(20, 10)
   createCanvas(windowWidth, windowHeight);
-  blo = new Block(1)
+
   newBlock();
 }
 
 function draw() {
-  // 
-  // 
-  play.display();
-  blo.display();
+
+  let curr = millis();
+  let delta = curr - prev;
+  prev = curr;
+
+
+  // Update
+
+
+  if (!paused)
+    fallingBlock.update(delta);
+
+  // move down block and spawn a new one
+
+  if (fallingBlock.timeToFall()) {
+    fallingBlock.resetTime();
+    fallingBlock.moveDown();
+
+    if (!pla.isValid(fallingBlock)) {
+      fallingBlock.moveUp();
+      newBlock();
+    }
+  }
+
+
+
+  pla.clearLines();
+
+
+  // Draw
+
+
+  background(251);
+
+
+  fallingBlock.display();
+  pla.display();
+
 }
 
 function mouseDragged() {
 
 
-  translate(mouseX, mouseY)
-  blo.display();
+
 
 }
+
 function newBlock() {
-	if (fallingBlock) {
-		playfield.addToGrid(fallingBlock);
-	}
-	
-	const block = ['1', '2', '3', '4']
-	const choice = random(block);
-	fallingBlock = new Block(choice, playfield);
-	
-	redraw();
+  if (fallingBlock) {
+    pla.addToGrid(fallingBlock);
+  }
+
+  const block = ['1', '2', '3', '4']
+  const choice = random(block);
+  fallingBlock = new Block(choice, pla);
+
+  redraw();
 
 }
+
+function keyPressed() {
+
+  switch (keyCode) {
+    case 'p':
+      paused = !paused;
+      break;
+  }
+
+
+
+
+}
+
 
 
 class Playfield {
@@ -53,25 +101,57 @@ class Playfield {
 
     // drawing sizes
     this.cellSize = 44;
-    this.borderSize = 4;
+    this.bordSize = 4;
 
     // show the grid line
     this.gridlines = true;
   }
 
-addToGrid(block) {
+  addToGrid(block) {
+    for (let row = 0; row < block.size; row++) {
+      for (let col = 0; col < block.size; col++) {
 
-}
+        if (block.cells[row][col] != null) {
+          let gridRow = block.y + row;
+          let gridCol = block.x + col;
+
+          this.ge[gridRow][gridCol] =
+            block.cells[row][col];
+        }
+
+      }
+    }
+
+  } //end of add
+
+
+  clearLines() {
+
+    for (let row = this.rows - 1; row >= 0; row--) {
+
+      // if this row is full
+      if (!this.ge[row].includes(this.foreground)) {
+        // remove the row
+        this.ge.splice(row, 1)
+        // and add an empty row to the top
+        this.ge.unshift(new Array(this.cols).fill(this.foreground));
+      }
+
+    }
+
+  }
+
+
   gengXin() {
     for (let i = 0; i < this.rows; i++) {
       this.ge[i] = new Array(this.cols).fill(this.foreground);
     }
-  }
+  } //update the new one
 
 
   display() {
     // Draw the border and gridlines	
-    let bs = this.borderSize
+    let bs = this.bordSize
     let cs = this.cellSize
 
     if (this.gridlines) {
@@ -99,31 +179,164 @@ addToGrid(block) {
 
   } // end of display()
 
+  isValid(block) {
+
+    for (let row = 0; row < block.size; row++) {
+      for (let col = 0; col < block.size; col++) {
+
+        if (block.cells[row][col] != null) {
+
+          let gridRow = block.y + row;
+          let gridCol = block.x + col;
+
+          if (gridRow < 0 || gridRow >= this.rows ||
+            gridCol < 0 || gridCol >= this.cols ||
+            this.ge[gridRow][gridCol] != this.foreground)
+            return false;
+        }
+
+      }
+    }
+
+    return true;
+
+  }
 
 }
 
 class Block {
 
-  constructor(type, playfield) {
+  constructor(type, playfield, x, y) {
     this.type = type;
-    this.playfield= play
-    //this.cellSize = playfield.cellSize;
-    //this.boardSize = playfield.boardSize;
+    this.cells = types[type];
+    this.size = this.cells.length;
+
+    this.cellSize = pla.cellSize;
+    this.bordSize = pla.bordSize;
+
+    if (this.x === undefined) {
+      this.x = floor((pla.cols - this.size) / 2)
+
+    } else {
+      this.x = x;
+    } //check if x is undefined and set the value.
+
+    this.y = y || 0; //y is either 0 or y
+
+    this.tim = 1000 // in ms
+    this.timeBetween = 0; // time since last drop
   }
+
+  update(time) {
+    this.timeBetween += time;
+  }
+
+
+  timeToFall() {
+    return this.timeBetween > this.tim
+  }
+
+  resetTime() {
+    this.timeBetween = 0;
+  }
+
+  copy(block) {
+    this.x = block.x;
+    this.y = block.y;
+    this.cells = block.cells
+  }
+
+
+
+
+
   display() {
-    if (this.type === 1) {
-      rect(0, 0, this.cellSize, this.cellSize)
-    } else if (this.type === 2) {
-      rect(0, 0, this.cellSize, 2*this.cellSize)
+    //     if (this.type === 1) {
+    //       rect(0, 0, this.cellSize, this.cellSize)
+    //     } else if (this.type === 2) {
+    //       rect(0, 0, 2*this.cellSize, this.cellSize)
 
-    } else if (this.type === 3) {
-      rect(0, 0, this.cellSize, 3*this.cellSize)
-    } else if (this.type === 4) {
-      rect(0, 0, this.cellSize, 4*this.cellSize)
+    //     } else if (this.type === 3) {
+    //       rect(0, 0, 3*this.cellSize, this.cellSize)
+    //     } else if (this.type === 4) {
+    //       rect(0, 0, 4*this.cellSize, this.cellSize)
+    //     }
+    for (let row = 0; row < this.size; row++) {
+      for (let col = 0; col < this.size; col++) {
+
+        if (this.cells[row][col]) {
+          let x = this.x + col;
+          let y = this.y + row;
+
+          let cs = this.cellSize;
+          let bs = this.bordSize;
+
+          rect(bs + cs * x, bs + cs * y, cs - 1, cs - 1);
+
+
+        }
+
+      }
     }
+  } //draw the blocks out
 
+
+
+  moveDown() {
+    this.y++;
   }
-  
+  moveRight() {
+    this.x++;
+  }
+  moveLeft() {
+    this.x--;
+  }
+  moveUp() {
+    this.y--;
+  }
 
-//will replace it by cell size
+  //movement functions
+}
+
+
+//set up the blocks types by arrays with color
+let types = {
+  1: [
+    ['#30FCFF']
+
+  ],
+
+
+
+  2: [
+
+    ['#FFF062', '#FFF062'],
+    [null, null]
+
+  ],
+
+
+
+
+
+  3: [
+    [null, null, null],
+    ['#FF3000', '#FF3000', '#FF3000'],
+    [null, null, null]
+
+  ],
+
+
+
+
+  4: [
+    [null, null, null, null],
+    ['#0DFF32', '#0DFF32', '#0DFF32', '#0DFF32'],
+    [null, null, null, null],
+    [null, null, null, null]
+  ]
+
+
+
+
 }
