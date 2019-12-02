@@ -1,10 +1,11 @@
-let prev, paused
-let pla
-let fallingBlock
+let paused, pla, fallingBlock
 
+const width = 10;
+const height = 22;
+let prev=0
 function setup() {
 
-  pla = new Playfield(20, 10)
+  pla = new Playfield(height, width)
   createCanvas(windowWidth, windowHeight);
 
   newBlock();
@@ -16,16 +17,16 @@ function draw() {
   let delta = curr - prev;
   prev = curr;
 
-
   // Update
 
 
-  if (!paused)
-    fallingBlock.update(delta);
+   if (!paused){
+  fallingBlock.update(delta);}
 
   // move down block and spawn a new one
 
   if (fallingBlock.timeToFall()) {
+
     fallingBlock.resetTime();
     fallingBlock.moveDown();
 
@@ -45,15 +46,15 @@ function draw() {
 
   background(251);
 
-
-  fallingBlock.display();
   pla.display();
+  fallingBlock.display();
+print(fallingBlock.x)
 
 }
 
 function mouseDragged() {
 
-
+fallingBlock.x=floor(map(mouseX,0,windowWidth,0,10))
 
 
 }
@@ -63,8 +64,8 @@ function newBlock() {
     pla.addToGrid(fallingBlock);
   }
 
-  const block = ['1', '2', '3', '4']
-  const choice = random(block);
+  const blocks = ['1', '2', '3', '4']
+  const choice = random(blocks);
   fallingBlock = new Block(choice, pla);
 
   redraw();
@@ -73,11 +74,11 @@ function newBlock() {
 
 function keyPressed() {
 
-  switch (keyCode) {
-    case 'p':
-      paused = !paused;
-      break;
-  }
+    switch (key) {
+      case 'p':
+        paused = !paused;
+        break;
+    }
 
 
 
@@ -150,7 +151,7 @@ class Playfield {
 
 
   display() {
-    // Draw the border and gridlines	
+    // Draw the border and gridlines  
     let bs = this.bordSize
     let cs = this.cellSize
 
@@ -224,27 +225,27 @@ class Block {
     this.y = y || 0; //y is either 0 or y
 
     this.tim = 1000 // in ms
-    this.timeBetween = 0; // time since last drop
+    this.timeB = 0; // time since last drop
+
   }
 
   update(time) {
-    this.timeBetween += time;
+
+    this.timeB += time;
+
   }
 
 
   timeToFall() {
-    return this.timeBetween > this.tim
+    return this.timeB > this.tim
+
   }
 
   resetTime() {
-    this.timeBetween = 0;
+    this.timeB = 0;
   }
 
-  copy(block) {
-    this.x = block.x;
-    this.y = block.y;
-    this.cells = block.cells
-  }
+
 
 
 
@@ -271,6 +272,7 @@ class Block {
           let cs = this.cellSize;
           let bs = this.bordSize;
 
+          fill(this.cells[row][col])
           rect(bs + cs * x, bs + cs * y, cs - 1, cs - 1);
 
 
@@ -320,18 +322,19 @@ let types = {
 
 
   3: [
-    [null, null, null],
-    ['#FF3000', '#FF3000', '#FF3000'],
-    [null, null, null]
 
+    ['#FF3000', '#FF3000', '#FF3000'],
+    [null, null, null],
+    [null, null, null]
   ],
 
 
 
 
   4: [
-    [null, null, null, null],
+
     ['#0DFF32', '#0DFF32', '#0DFF32', '#0DFF32'],
+    [null, null, null, null],
     [null, null, null, null],
     [null, null, null, null]
   ]
