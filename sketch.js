@@ -1,4 +1,4 @@
-let paused, pla, fallingBlock
+let paused, pla, fallingBlock,leng
 
 const width = 10;
 const height = 22;
@@ -16,12 +16,13 @@ function draw() {
   let curr = millis();
   let delta = curr - prev;
   prev = curr;
-
+// print(delta)
   // Update
 
 
    if (!paused){
   fallingBlock.update(delta);}
+
 
   // move down block and spawn a new one
 
@@ -30,33 +31,49 @@ function draw() {
     fallingBlock.resetTime();
     fallingBlock.moveDown();
 
-    if (!pla.isValid(fallingBlock)) {
+    // while (fallingBlock.y)
+      //will have a function to check the previous position and to either to move left or right to avoid overlap
+      
+      if (!pla.isValid(fallingBlock)) {
       fallingBlock.moveUp();
       newBlock();
     }
   }
 
 
-
+checkBorder()
   pla.clearLines();
 
-
-  // Draw
-
+//draw
 
   background(251);
 
   pla.display();
   fallingBlock.display();
-print(fallingBlock.x)
+//print(fallingBlock.x)
+
 
 }
 
 function mouseDragged() {
 
-fallingBlock.x=floor(map(mouseX,0,windowWidth,0,10))
+fallingBlock.x=floor(map(mouseX,0,windowWidth,0,8))
+  fallingBlock.y=fallingBlock.y
 
 
+}
+function checkBorder(){
+  if(fallingBlock.x<=0){
+    
+    fallingBlock.x=0
+    
+  }
+
+  if(fallingBlock.x>10-leng){
+      fallingBlock.x=10-leng
+  }
+  
+  
 }
 
 function newBlock() {
@@ -67,7 +84,7 @@ function newBlock() {
   const blocks = ['1', '2', '3', '4']
   const choice = random(blocks);
   fallingBlock = new Block(choice, pla);
-
+  leng=types[choice].length
   redraw();
 
 }
@@ -79,12 +96,14 @@ function keyPressed() {
         paused = !paused;
         break;
     }
-
-
-
-
 }
 
+// function collide(){
+  
+//   if(fallingBlock.x > fallingBlock.cellSize &&fallingBlock.x < x+w && fallingBlock.y > y && fallingBlock.y < y + h){
+  
+  
+// }
 
 
 class Playfield {
@@ -268,12 +287,12 @@ class Block {
         if (this.cells[row][col]) {
           let x = this.x + col;
           let y = this.y + row;
-
+  
           let cs = this.cellSize;
           let bs = this.bordSize;
 
           fill(this.cells[row][col])
-          rect(bs + cs * x, bs + cs * y, cs - 1, cs - 1);
+          rect(bs + cs * x, bs + cs * y, cs-1 , cs-1);
 
 
         }
