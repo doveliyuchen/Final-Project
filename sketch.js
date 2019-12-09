@@ -1,79 +1,145 @@
-let paused, pla, fallingBlock,leng
+let paused, pla, fallingBlock, leng;
 
 const width = 10;
-const height = 22;
-let prev=0
+const height = 18;
+let prev = 0
+let c = 0;
+let speechW;
+let score = 0;
+
+function preload() {
+  soundFormats('mp3', 'ogg');
+  mySound = loadSound('1.mp3');
+  mySound1 = loadSound('dingdong.mp3');
+  mySound2 = loadSound('5427.mp3');
+  mySound3 = loadSound('9297.mp3');
+
+}
+
+
+
 function setup() {
 
+  speechW = new p5.SpeechRec('en-US'); // new P5.SpeechRec object
+  speechW.continuous = true; // do continuous recognition
+  speechW.interimResults = true;
+  speechW.onResult = movement;
   pla = new Playfield(height, width)
-  createCanvas(windowWidth, windowHeight);
+  createCanvas(displayWidth, 0.8 * displayHeight);
+  speechW.start();
+  mySound.setVolume(0.3);
+  mySound1.setVolume(0.3);
+  mySound2.setVolume(0.3);
+  mySound3.setVolume(0.3);
+  mySound.play();
 
   newBlock();
 }
 
 function draw() {
-
+  translate(displayWidth / 2.5, 200)
   let curr = millis();
   let delta = curr - prev;
   prev = curr;
-// print(delta)
+
   // Update
+if (score>35){
+  score=score-floor(curr/4000)
+} else if (score<0){
+  c=1
+}
+  if (c === 0) {
 
 
-   if (!paused){
-  fallingBlock.update(delta);}
-
-
-  // move down block and spawn a new one
-
-  if (fallingBlock.timeToFall()) {
-
-    fallingBlock.resetTime();
-    fallingBlock.moveDown();
-
-    // while (fallingBlock.y)
-      //will have a function to check the previous position and to either to move left or right to avoid overlap
-      
-      if (!pla.isValid(fallingBlock)) {
-      fallingBlock.moveUp();
-      newBlock();
+    if (!paused) {
+      fallingBlock.update(delta);
     }
+    // move down block and spawn a new one
+    if (fallingBlock.timeToFall()) {
+      fallingBlock.resetTime();
+      fallingBlock.moveDown();
+    }
+    //will have a function to check the previous position and to either to move to avoid overlap
+
+    if (!pla.isValid(fallingBlock)) {
+      fallingBlock.moveUp()
+      mySound1.play();
+      if (fallingBlock.y < 1) {
+        c = 1
+        mySound2.play();
+        mySound.stop();
+      } else {
+        newBlock();
+
+      }
+    }
+
+    
+    checkBorder()
+    pla.clearLines();
+    background(255);
+    pla.display();
+    fallingBlock.display();
+    push();
+    fill('#ECC1FF');
+    textSize(40)
+    text('Score:' + score, 310, -30);
+    pop();
+  } else if(c===1){
+
+    push()
+    textSize(40)
+    fill(0)
+    text('Game Over', 100, 400);
+    pop()
   }
 
-
-checkBorder()
-  pla.clearLines();
-
-//draw
-
-  background(251);
-
-  pla.display();
-  fallingBlock.display();
-//print(fallingBlock.x)
 
 
 }
 
 function mouseDragged() {
+if (score>10){
+  if (mouseX < 0) {
+    mouseX = 0
+  }
+  fallingBlock.x = floor(map(mouseX, 0, displayWidth, 0, 10 - leng))
 
-fallingBlock.x=floor(map(mouseX,0,windowWidth,0,8))
-  fallingBlock.y=fallingBlock.y
+  while (!pla.isValid(fallingBlock)) {
+    fallingBlock.moveUp();
 
+  }
+}
 
 }
-function checkBorder(){
-  if(fallingBlock.x<=0){
-    
-    fallingBlock.x=0
-    
-  }
 
-  if(fallingBlock.x>10-leng){
-      fallingBlock.x=10-leng
+function movement() {
+
+  var control = speechW.resultString.toLowerCase();
+  if (control.search("left") !== -1) {
+    fallingBlock.moveLeft();
+  } else if (control.search("right") !== -1) {
+    fallingBlock.moveRight();
+  } else if (control.search("down") !== -1) {
+    fallingBlock.moveDown();
   }
-  
-  
+  if (fallingBlock.x < 0) {
+    fallingBlock.x = 0
+  }
+  if (fallingBlock.x > 10 - leng) {
+    fallingBlock.x = 10 - leng
+  }
+  console.log(control);
+}
+
+
+function checkBorder() {
+if (fallingBlock.x <= 0) {
+    fallingBlock.x = 0
+  }
+  if (fallingBlock.x > 10 - leng) {
+    fallingBlock.x = 10 - leng
+  }
 }
 
 function newBlock() {
@@ -84,26 +150,27 @@ function newBlock() {
   const blocks = ['1', '2', '3', '4']
   const choice = random(blocks);
   fallingBlock = new Block(choice, pla);
-  leng=types[choice].length
+  leng = types[choice].length
   redraw();
 
 }
 
 function keyPressed() {
 
-    switch (key) {
-      case 'p':
-        paused = !paused;
-        break;
-    }
+  switch (key) {
+    case 'p':
+      paused = !paused;
+      break;
+    case ' ':
+
+      while (pla.isValid(fallingBlock)) {
+        fallingBlock.moveDown();
+      }
+      break;
+  }
 }
 
-// function collide(){
-  
-//   if(fallingBlock.x > fallingBlock.cellSize &&fallingBlock.x < x+w && fallingBlock.y > y && fallingBlock.y < y + h){
-  
-  
-// }
+
 
 
 class Playfield {
@@ -153,6 +220,8 @@ class Playfield {
       if (!this.ge[row].includes(this.foreground)) {
         // remove the row
         this.ge.splice(row, 1)
+        mySound3.play();
+        score = score + 5;
         // and add an empty row to the top
         this.ge.unshift(new Array(this.cols).fill(this.foreground));
       }
@@ -267,32 +336,20 @@ class Block {
 
 
 
-
-
-
   display() {
-    //     if (this.type === 1) {
-    //       rect(0, 0, this.cellSize, this.cellSize)
-    //     } else if (this.type === 2) {
-    //       rect(0, 0, 2*this.cellSize, this.cellSize)
 
-    //     } else if (this.type === 3) {
-    //       rect(0, 0, 3*this.cellSize, this.cellSize)
-    //     } else if (this.type === 4) {
-    //       rect(0, 0, 4*this.cellSize, this.cellSize)
-    //     }
     for (let row = 0; row < this.size; row++) {
       for (let col = 0; col < this.size; col++) {
 
         if (this.cells[row][col]) {
           let x = this.x + col;
           let y = this.y + row;
-  
+
           let cs = this.cellSize;
           let bs = this.bordSize;
 
           fill(this.cells[row][col])
-          rect(bs + cs * x, bs + cs * y, cs-1 , cs-1);
+          rect(bs + cs * x, bs + cs * y, cs - 1, cs - 1);
 
 
         }
@@ -323,42 +380,29 @@ class Block {
 //set up the blocks types by arrays with color
 let types = {
   1: [
-    ['#30FCFF']
+    ['#AAF7FF']
 
   ],
 
-
-
   2: [
 
-    ['#FFF062', '#FFF062'],
+    ['#A4FFC8', '#A4FFC8'],
     [null, null]
 
   ],
 
-
-
-
-
   3: [
 
-    ['#FF3000', '#FF3000', '#FF3000'],
+    ['#FF8CA8', '#FF8CA8', '#FF8CA8'],
     [null, null, null],
     [null, null, null]
   ],
 
-
-
-
   4: [
 
-    ['#0DFF32', '#0DFF32', '#0DFF32', '#0DFF32'],
+    ['#FFFF99', '#FFFF99', '#FFFF99', '#FFFF99'],
     [null, null, null, null],
     [null, null, null, null],
     [null, null, null, null]
   ]
-
-
-
-
 }
