@@ -1,4 +1,4 @@
-let paused, pla, fallingBlock, leng, speechW;;
+let paused, pla, fallingBlock, leng, speechW,speechC;
 
 const width = 10;
 const height = 18;
@@ -22,6 +22,7 @@ function preload() { // preload all the music/sound
 function setup() {
 
   speechW = new p5.SpeechRec('en-US'); // set up speech based on speechrec object
+  speechC = new p5.SpeechRec('zh-CN');
   speechW.continuous = true; // it is a continuous recognition
   speechW.interimResults = true; // make result become string
   speechW.onResult = movement; // apply these result to the movement function
@@ -38,7 +39,7 @@ function setup() {
 }
 
 function draw() {
-  translate(windowWidth / 2.5, 200)
+  translate(windowWidth / 2.5, 80)
   let curr = millis();
   let delta = curr - prev;
   prev = curr;
@@ -60,14 +61,14 @@ function draw() {
     // move down block and spawn a new one
     if (fallingBlock.timeToFall()) {
       fallingBlock.resetTime();
-      fallingBlock.moveDown();
+      fallingBlock.down();
     }
 
     
     //will have a function to check the previous position and to either to move to avoid overlap
 
-    if (!pla.isValid(fallingBlock)) {
-      fallingBlock.moveUp()
+    if (!pla.hasSpace(fallingBlock)) {
+      fallingBlock.up()
       mySound1.play();
       if (fallingBlock.y < 1) {
         c = 1
@@ -102,7 +103,7 @@ if (d===1) {
     push()
     textSize(40)
     fill(0)
-    text('   Game Over', 100, 400);
+    text('Game Over', 20, 200);
     pop() // game over, game end       
   }
 }
@@ -112,13 +113,13 @@ function windowResized() {
 }
 
 function mouseDragged() {
-  if (score > -1) {
+  if (score > 1) {
     if (mouseX < 0) {
       mouseX = 0
     }
     fallingBlock.x = round(map(mouseX, 0, windowWidth, 0, 10 - leng))
-    while (!pla.isValid(fallingBlock)) {
-      fallingBlock.moveUp();
+    while (!pla.hasSpace(fallingBlock)) {
+      fallingBlock.up();
     }
   }
 } // use mouse to change its position if the score is higher than 5
@@ -126,11 +127,11 @@ function mouseDragged() {
 function movement() {
   var control = speechW.resultString.toLowerCase();
   if (control.search("left") !== -1) {
-    fallingBlock.moveLeft();
+    fallingBlock.left();
   } else if (control.search("right") !== -1) {
-    fallingBlock.moveRight();
+    fallingBlock.right();
   } else if (control.search("down") !== -1) {
-    fallingBlock.moveDown();
+    fallingBlock.down();
   }
   if (fallingBlock.x < 0) {
     fallingBlock.x = 0
@@ -153,7 +154,7 @@ function checkBorder() {
 
 function newBlock() {
   if (fallingBlock) {
-    pla.addToGrid(fallingBlock);
+    pla.appear(fallingBlock);
   }
   const blocks = ['1', '2', '3', '4']
   const choice = random(blocks);
@@ -167,7 +168,7 @@ function mouseClicked(){
   
   if (d===1){
     let f = dist(525, 425, mouseX, mouseY)
-    if (f<1078 &&f>995){
+    if (f<600 &&f>500){
       e=1
       d=0
     }
@@ -182,12 +183,12 @@ function keyPressed() {
       break;
     case ' ':
 if (e===0){
-      while (pla.isValid(fallingBlock)) {
-        fallingBlock.moveDown();}}
+      while (pla.hasSpace(fallingBlock)) {
+        fallingBlock.down();}}
       else{
         fallingBlock.y=fallingBlock.y+18
-    while (!pla.isValid(fallingBlock)) {
-        fallingBlock.moveUp();
+    while (!pla.hasSpace(fallingBlock)) {
+        fallingBlock.up();
   }
       }
       break;
@@ -204,28 +205,28 @@ class Playfield {
     this.background = (100);
 
     // dimensions and grid
-    this.rows = h;
-    this.cols = w;
+    this.y = h;
+    this.x = w;
     this.ge = [];
     this.gengXin();
 
     // drawing sizes
-    this.cellSize = 44;
-    this.bordSize = 4;
+    this.cellSize = 25;
+    this.bsize = 4;
 
 
   }
 
-  addToGrid(block) {
-    for (let row = 0; row < block.size; row++) {
-      for (let col = 0; col < block.size; col++) {
+  appear(block) {
+    for (let y = 0; y < block.size; y++) {
+      for (let x = 0; x < block.size; x++) {
 
-        if (block.cells[row][col] != null) {
-          let gridRow = block.y + row;
-          let gridCol = block.x + col;
+        if (block.cells[y][x] != null) {
+          let gridY = block.y + y;
+          let gridX = block.x + x;
 
-          this.ge[gridRow][gridCol] =
-            block.cells[row][col];
+          this.ge[gridY][gridX] =
+            block.cells[y][x];
         }
 
       }
@@ -235,16 +236,16 @@ class Playfield {
 
 
   remove() {
-    for (let row = this.rows - 1; row >= 0; row--) {
+    for (let y = this.y - 1; y >= 0; y--) {
       // if this row is full
-      if (!this.ge[row].includes(this.foreground)) {
+      if (!this.ge[y].includes(this.foreground)) {
         // remove the row
-        this.ge.splice(row, 1)
+        this.ge.splice(y, 1)
          e=0
         mySound3.play();
         score = score + 5;
         // and move down the top one
-        this.ge.unshift(new Array(this.cols).fill(this.foreground));
+        this.ge.unshift(new Array(this.x).fill(this.foreground));
       }
 
     }
@@ -253,49 +254,49 @@ class Playfield {
 
 
   gengXin() {
-    for (let i = 0; i < this.rows; i++) {
-      this.ge[i] = new Array(this.cols).fill(this.foreground);
+    for (let i = 0; i < this.y; i++) {
+      this.ge[i] = new Array(this.x).fill(this.foreground);
     }
   } //update the new row
 
 
   display() {
     // Draw the border and gridlines  
-    let bs = this.bordSize
+    let bs = this.bsize
     let cs = this.cellSize
     fill(this.background);
     stroke(this.background)
     strokeWeight(bs);
     let midbs = floor(bs / 2)
 
-    rect(midbs, midbs, cs * this.cols + bs - 1, cs * this.rows + bs - 1)
+    rect(midbs, midbs, cs * this.x + bs - 1, cs * this.y + bs - 1)
     // Draw cells over the big background
 
-    for (let row = 0; row < this.ge.length; row++) {
-      for (let col = 0; col < this.ge[row].length; col++) {
+    for (let y = 0; y < this.ge.length; y++) {
+      for (let x = 0; x < this.ge[y].length; x++) {
 
         // fill the colors of each cell
-        fill(this.ge[row][col]);
+        fill(this.ge[y][x]);
         noStroke();
-        rect(cs * col + bs, cs * row + bs, cs - 1, cs - 1);
+        rect(cs * x + bs, cs * y + bs, cs - 1, cs - 1);
       }
     }
 
   } // end of display()
 
-  isValid(block) {
+  hasSpace(block) {
 
-    for (let row = 0; row < block.size; row++) {
-      for (let col = 0; col < block.size; col++) {
+    for (let y = 0; y < block.size; y++) {
+      for (let x = 0; x < block.size; x++) {
 
-        if (block.cells[row][col] != null) {
+        if (block.cells[y][x] != null) {
 
-          let gridRow = block.y + row;
-          let gridCol = block.x + col;
+          let gridY = block.y + y;
+          let gridX = block.x + x;
 
-          if (gridRow < 0 || gridRow >= this.rows ||
-            gridCol < 0 || gridCol >= this.cols ||
-            this.ge[gridRow][gridCol] != this.foreground) {
+          if (gridY < 0 || gridY >= this.y ||
+            gridX < 0 || gridX >= this.x ||
+            this.ge[gridY][gridX] != this.foreground) {
 
             return false;
           }
@@ -319,10 +320,10 @@ class Block {
     this.size = this.cells.length;
 
     this.cellSize = pla.cellSize;
-    this.bordSize = pla.bordSize;
+    this.bsize = pla.bsize;
 
     if (this.x === undefined) {
-      this.x = floor((pla.cols - this.size) / 2)
+      this.x = floor((pla.x - this.size) / 2)
       //set the original place of new blocks
     } else {
       this.x = x;
@@ -347,25 +348,18 @@ class Block {
     this.timeB = 0;
   }
 
-
-
-
   display() {
 
-    for (let row = 0; row < this.size; row++) {
-      for (let col = 0; col < this.size; col++) {
+    for (let y1 = 0; y1 < this.size; y1++) {
+      for (let x1 = 0; x1 < this.size; x1++) {
 
-        if (this.cells[row][col] != null) {
-          let x = this.x + col;
-          let y = this.y + row;
-
+        if (this.cells[y1][x1] != null) {
+          let x = this.x + x1;
+          let y = this.y + y1;
           let cs = this.cellSize;
-          let bs = this.bordSize;
-
-          fill(this.cells[row][col])
+          let bs = this.bsize;
+          fill(this.cells[y1][x1])
           rect(bs + cs * x, bs + cs * y, cs - 1, cs - 1);
-
-
         }
 
       }
@@ -374,16 +368,16 @@ class Block {
 
 
 
-  moveDown() {
+  down() {
     this.y++;
   }
-  moveRight() {
+  right() {
     this.x++;
   }
-  moveLeft() {
+  left() {
     this.x--;
   }
-  moveUp() {
+  up() {
     this.y--;
   }
 
