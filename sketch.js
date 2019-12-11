@@ -1,4 +1,4 @@
-let paused, pla, fallingBlock, leng, speechW;;
+let paused, pla, fallingBlock, leng, speechW, speechC, cute, pand;
 
 const width = 10;
 const height = 18;
@@ -6,7 +6,10 @@ let prev = 0
 let c = 0;
 let score = 0;
 let d = 0;
-let e= 0;
+let e = 0;
+let g = 0;
+let h = 0;
+let delta = 10;
 
 function preload() { // preload all the music/sound
   soundFormats('mp3', 'ogg');
@@ -14,123 +17,140 @@ function preload() { // preload all the music/sound
   mySound1 = loadSound('dingdong.mp3');
   mySound2 = loadSound('5427.mp3');
   mySound3 = loadSound('9297.mp3');
-
+  img = loadImage('780.jpg');
 }
 
 
 
 function setup() {
-
   speechW = new p5.SpeechRec('en-US'); // set up speech based on speechrec object
   speechW.continuous = true; // it is a continuous recognition
   speechW.interimResults = true; // make result become string
   speechW.onResult = movement; // apply these result to the movement function
   pla = new Playfield(width, height) // make playfield
-  createCanvas(windowWidth, 0.9 * windowHeight); // create the window for drawing
+  createCanvas(windowWidth, windowHeight); // create the window for drawing
   speechW.start(); // start listen to speech
   mySound.setVolume(0.3);
   mySound1.setVolume(0.3);
   mySound2.setVolume(0.3);
   mySound3.setVolume(0.3); //set up the volume of music
   mySound.play(); // background sound play
-  cute = new Cute(500, 400, 0.1);
+  cute = new Cute(300, 300, 0.1);
+  pand = new Panda(-370, -300, 1);
   newBlock();
+  a1 = new Flower(650, 660, 120, 79, 0.5);
+  a3 =new Flower(450,690,30,120,0.5);
+  a4 = new Flower(-550,590,124,94,0.5);
+  a5 = new Flower(-150,630,35,194,0.2);
+  
+ 
 }
 
 function draw() {
-  translate(windowWidth / 2.5, 200)
-  let curr = millis();
-  let delta = curr - prev;
-  prev = curr;
 
-  // Update time to generate blocks
+  translate(windowWidth / 2.3, 200)
   if (score > 35) {
-    score = round(score - prev / 5000)
+    score = round(score - prev / 5000) //challenge mode, if u got 35 points
   } else if (score < 0) {
-    c = 1
+    c = 1 //if ur score is negative(took too long to remove), you died
   } // score changed by time, and if score is less than 0, you lose;
-  if (!paused) {
-    fallingBlock.update(delta);
-  }
-  if (c === 0) {
 
+  if (!paused) {
+    fallingBlock.update();
+  }
+  
+  if (c === 0) {
     if (!mySound.isPlaying()) {
       mySound.play();
     }
     // move down block and spawn a new one
     if (fallingBlock.timeToFall()) {
       fallingBlock.resetTime();
-      fallingBlock.moveDown();
+      fallingBlock.down();
     }
-
-    
     //will have a function to check the previous position and to either to move to avoid overlap
-
-    if (!pla.isValid(fallingBlock)) {
-      fallingBlock.moveUp()
+    if (!pla.hasSpace(fallingBlock)) {
+      fallingBlock.up()
       mySound1.play();
-      if (fallingBlock.y < 1) {
+      
+      if (fallingBlock.y < 1) {//no space! you died(no matter what y are u;
         c = 1
         mySound2.play();
         mySound.stop();
-      }else if(fallingBlock.y < 6&&fallingBlock.y >4) {
-        d = 1 
-      newBlock();
-    }else {
+      } 
+      else if (fallingBlock.y < 6 && fallingBlock.y > 4) {//if u stack a little, the space mode will change
+        d = 1
         newBlock();
-
+      } 
+      else if (fallingBlock.y < 4 && fallingBlock.y > 2 && g === 0) {// remove two lines to help, but only happen once.
+        g = 1
+        newBlock();
+      } 
+      else {//generate new block
+        newBlock();
       }
     }
-    checkBorder()
+    
+    checkBorder()//check the border to avoid errors
     pla.remove();
-    background(255);
+      background(img)
     pla.display();
+    
     fallingBlock.display();
-if (d===1) {
-  ellipse(525,425,100,100);
-        cute.display()
+    
+    a1.dis();
+    a3.dis();
+    a4.dis();
+    a5.dis();//flowers
+
+    if (d === 1) {// helps
+      cute.display()
     }
-
-
+    if (g === 1) {
+      pand.display()
+    }
+    
     push(); //score;
-    fill('#ECC1FF');
+    fill(255);
     textSize(40)
-    text('Score:' + score, 310, -30);
+    text('Score:' + score, 65, -20);
     pop();
-  } else if (c === 1) {
-
+  } 
+  
+  else if (c === 1) {
     push()
     textSize(40)
     fill(0)
-    text('   Game Over', 100, 400);
+    text('Game Over', 20, 200);
     pop() // game over, game end       
   }
 }
 
 function windowResized() {
-  resizeCanvas(windowWidth, 0.9 * windowHeight);
+  resizeCanvas(windowWidth,windowHeight);
 }
 
 function mouseDragged() {
-  if (score > -1) {
+  if (score > 1) {
     if (mouseX < 0) {
       mouseX = 0
     }
     fallingBlock.x = round(map(mouseX, 0, windowWidth, 0, 10 - leng))
-    while (!pla.isValid(fallingBlock)) {
-      fallingBlock.moveUp();
+    while (!pla.hasSpace(fallingBlock)) {
+      fallingBlock.up();
     }
   }
 } // use mouse to change its position if the score is higher than 5
 
+
 function movement() {
   var control = speechW.resultString.toLowerCase();
   if (control.search("left") !== -1) {
-    fallingBlock.moveLeft();
+    fallingBlock.left();
   } else if (control.search("right") !== -1) {
-    fallingBlock.moveRight();
+    fallingBlock.right();
   } else if (control.search("down") !== -1) {
-    fallingBlock.moveDown();
+    fallingBlock.down();
   }
   if (fallingBlock.x < 0) {
     fallingBlock.x = 0
@@ -138,7 +158,7 @@ function movement() {
   if (fallingBlock.x > 10 - leng) {
     fallingBlock.x = 10 - leng
   }
-  console.log(control);
+  console.log(control);//show the array;
 } // use voice to control the block
 
 
@@ -153,7 +173,7 @@ function checkBorder() {
 
 function newBlock() {
   if (fallingBlock) {
-    pla.addToGrid(fallingBlock);
+    pla.appear(fallingBlock);
   }
   const blocks = ['1', '2', '3', '4']
   const choice = random(blocks);
@@ -163,13 +183,20 @@ function newBlock() {
 }
 
 
-function mouseClicked(){
-  
-  if (d===1){
-    let f = dist(525, 425, mouseX, mouseY)
-    if (f<1078 &&f>995){
-      e=1
-      d=0
+function mouseClicked() {
+
+  if (d === 1) {//cat help
+    let f = dist(909+windowWidth*0.1, 555, mouseX, mouseY)
+    if (f < 100 && f > -50) {
+      e = 1
+      d = 0
+    }
+  }
+  if (g === 1) {// panda help
+    let f = dist(880+windowWidth*0.1, 340, mouseX, mouseY)
+    if (f < 100 && f > 0) {
+      g = 3;
+      h = 1;
     }
   }
 }
@@ -181,51 +208,142 @@ function keyPressed() {
       paused = !paused;
       break;
     case ' ':
-if (e===0){
-      while (pla.isValid(fallingBlock)) {
-        fallingBlock.moveDown();}}
-      else{
-        fallingBlock.y=fallingBlock.y+18
-    while (!pla.isValid(fallingBlock)) {
-        fallingBlock.moveUp();
-  }
+      if (e === 0) {
+        while (pla.hasSpace(fallingBlock)) {
+          fallingBlock.down();
+        }
+      } else {
+        fallingBlock.y = fallingBlock.y + 18
+        while (!pla.hasSpace(fallingBlock)) {
+          fallingBlock.up();
+        }
       }
       break;
   }
-  
+
 }
 
+
+class Panda {
+
+  constructor(x, y, a) {
+    this.x = x;
+    this.y = y;
+    this.a = a;
+  }
+
+  display() {
+    push();
+    stroke(0);
+    strokeWeight(1);
+    scale(this.a);
+    translate(this.x / this.a, this.y / this.a)
+    //panda body
+    fill(255);
+    ellipse(700, 473, 55, 60);
+
+    // panda ears
+    fill(0);
+    ellipse(675, 403, 20, 15);
+    ellipse(725, 403, 20, 15);
+
+    // head
+    fill(255);
+    ellipse(700, 430, 80, 60);
+
+    //eye shadow and nose
+    fill(0);
+    ellipse(700, 430, 10, 5);
+    ellipse(684, 423, 20, 15);
+    ellipse(717, 423, 20, 15);
+    // eyes and mouth
+    fill(255);
+    ellipse(683, 422, 10, 10);
+    ellipse(716, 422, 10, 10);
+    arc(694, 432, 12, 12, 0, PI / 1.8, OPEN);
+    arc(706, 432, 12, 12, PI / 2.6, PI, OPEN);
+
+    //bamboo in hand
+    fill('#67D600');
+    rect(689, 446, 20, 30);
+    rect(689, 477, 20, 30);
+
+    //panda feet and hands
+    fill(0);
+    ellipse(673, 465, 15, 20);
+    ellipse(678, 470, 25, 15);
+    ellipse(720, 470, 25, 15);
+    ellipse(725, 465, 15, 20);
+    ellipse(677, 493, 25, 19);
+    ellipse(723, 493, 25, 19);
+
+    // eye 
+    stroke(0);
+    strokeWeight(1);
+    fill(0);
+    ellipse(678 + 3, 422, 5, 5);
+    ellipse(711 + 3, 422, 5, 5);
+
+    pop()
+  }
+
+
+}
 
 class Playfield {
 
   constructor(w, h) {
     // colors
     this.foreground = (255);
-    this.background = (100);
-
+    this.background = (60);
     // dimensions and grid
-    this.rows = h;
-    this.cols = w;
+    this.y = h;
+    this.x = w;
     this.ge = [];
-    this.gengXin();
+    this.fillin();
 
     // drawing sizes
-    this.cellSize = 44;
-    this.bordSize = 4;
-
+    this.cellSize = 25;
+    this.bsize = 4;
 
   }
 
-  addToGrid(block) {
-    for (let row = 0; row < block.size; row++) {
-      for (let col = 0; col < block.size; col++) {
+  fillin() {
+    for (let i = 0; i < this.y; i++) {
+      this.ge[i] = new Array(this.x).fill(this.foreground);
+    }
+  } //create the array, and become foreground.
+  display() {
+    // Draw the border and gridlines  
+    let bs = this.bsize
+    let cs = this.cellSize
+    fill(this.background);
+    stroke(this.background)
+    strokeWeight(bs);
+    let midbs = floor(bs / 2)
 
-        if (block.cells[row][col] != null) {
-          let gridRow = block.y + row;
-          let gridCol = block.x + col;
+    rect(midbs, midbs, cs * this.x + bs - 1, cs * this.y + bs - 1)
+    // Draw cells over the big background
+    for (let y = 0; y < this.ge.length; y++) {
+      for (let x = 0; x < this.ge[y].length; x++) {
+        // fill the colors of each cell
+        fill(this.ge[y][x]);
+        noStroke();
+        rect(cs * x + bs, cs * y + bs, cs - 1, cs - 1);
+      }
+    }
+  } // end of display()
 
-          this.ge[gridRow][gridCol] =
-            block.cells[row][col];
+
+
+  appear(block) {
+    for (let y = 0; y < block.size; y++) {
+      for (let x = 0; x < block.size; x++) {
+        if (block.cells[y][x] != null) {
+          let gridY = block.y + y;
+          let gridX = block.x + x;
+          this.ge[gridY][gridX] =
+            block.cells[y][x];
         }
 
       }
@@ -235,73 +353,43 @@ class Playfield {
 
 
   remove() {
-    for (let row = this.rows - 1; row >= 0; row--) {
+    for (let y = this.y - 1; y >= 0; y--) {
       // if this row is full
-      if (!this.ge[row].includes(this.foreground)) {
+      if (!this.ge[y].includes(this.foreground)) {
         // remove the row
-        this.ge.splice(row, 1)
-         e=0
+        this.ge.splice(y, 1)
+        e = 0
         mySound3.play();
         score = score + 5;
         // and move down the top one
-        this.ge.unshift(new Array(this.cols).fill(this.foreground));
+        this.ge.unshift(new Array(this.x).fill(this.foreground));
+      }
+      if (h === 1) {
+        this.ge.splice(17, 1)
+        this.ge.splice(16, 1)
+        mySound3.play();
+        this.ge.unshift(new Array(this.x).fill(this.foreground));
+        this.ge.unshift(new Array(this.x).fill(this.foreground));
+        h = 3;
       }
 
     }
 
   }
 
+  hasSpace(block) {
 
-  gengXin() {
-    for (let i = 0; i < this.rows; i++) {
-      this.ge[i] = new Array(this.cols).fill(this.foreground);
-    }
-  } //update the new row
-
-
-  display() {
-    // Draw the border and gridlines  
-    let bs = this.bordSize
-    let cs = this.cellSize
-    fill(this.background);
-    stroke(this.background)
-    strokeWeight(bs);
-    let midbs = floor(bs / 2)
-
-    rect(midbs, midbs, cs * this.cols + bs - 1, cs * this.rows + bs - 1)
-    // Draw cells over the big background
-
-    for (let row = 0; row < this.ge.length; row++) {
-      for (let col = 0; col < this.ge[row].length; col++) {
-
-        // fill the colors of each cell
-        fill(this.ge[row][col]);
-        noStroke();
-        rect(cs * col + bs, cs * row + bs, cs - 1, cs - 1);
-      }
-    }
-
-  } // end of display()
-
-  isValid(block) {
-
-    for (let row = 0; row < block.size; row++) {
-      for (let col = 0; col < block.size; col++) {
-
-        if (block.cells[row][col] != null) {
-
-          let gridRow = block.y + row;
-          let gridCol = block.x + col;
-
-          if (gridRow < 0 || gridRow >= this.rows ||
-            gridCol < 0 || gridCol >= this.cols ||
-            this.ge[gridRow][gridCol] != this.foreground) {
-
+    for (let y = 0; y < block.size; y++) {
+      for (let x = 0; x < block.size; x++) {
+        if (block.cells[y][x] != null) {
+          let gridY = block.y + y;
+          let gridX = block.x + x;
+          if (gridY < 0 || gridY >= this.y ||
+            gridX < 0 || gridX >= this.x ||
+            this.ge[gridY][gridX] != this.foreground) {
             return false;
           }
-
         }
-
       }
     }
 
@@ -317,12 +405,11 @@ class Block {
     this.type = type;
     this.cells = types[type];
     this.size = this.cells.length;
-
     this.cellSize = pla.cellSize;
-    this.bordSize = pla.bordSize;
+    this.bsize = pla.bsize;
 
     if (this.x === undefined) {
-      this.x = floor((pla.cols - this.size) / 2)
+      this.x = floor((pla.x - this.size) / 2)
       //set the original place of new blocks
     } else {
       this.x = x;
@@ -333,8 +420,8 @@ class Block {
 
   }
 
-  update(time) {
-    this.timeB += time; //update the time let new block generate, or pause.
+  update() {
+    this.timeB = delta + this.timeB; //update the time let new block generate, or pause.
   }
 
 
@@ -347,43 +434,33 @@ class Block {
     this.timeB = 0;
   }
 
-
-
-
   display() {
 
-    for (let row = 0; row < this.size; row++) {
-      for (let col = 0; col < this.size; col++) {
-
-        if (this.cells[row][col] != null) {
-          let x = this.x + col;
-          let y = this.y + row;
-
+    for (let y1 = 0; y1 < this.size; y1++) {
+      for (let x1 = 0; x1 < this.size; x1++) {
+        if (this.cells[y1][x1] != null) {
+          let x = this.x + x1;
+          let y = this.y + y1;
           let cs = this.cellSize;
-          let bs = this.bordSize;
-
-          fill(this.cells[row][col])
+          let bs = this.bsize;
+          fill(this.cells[y1][x1])
           rect(bs + cs * x, bs + cs * y, cs - 1, cs - 1);
-
-
         }
 
       }
     }
   } //draw the blocks out
 
-
-
-  moveDown() {
+  down() {
     this.y++;
   }
-  moveRight() {
+  right() {
     this.x++;
   }
-  moveLeft() {
+  left() {
     this.x--;
   }
-  moveUp() {
+  up() {
     this.y--;
   }
 
@@ -421,6 +498,98 @@ let types = {
   ]
 }
 
+class Flower {
+  constructor(x, y, a, b, c) {
+    this.x = x;
+    this.y = y;
+    this.a = a;
+    this.b = b;
+    this.c = c
+
+  }
+  
+  display() {
+    scale(this.c);
+    push();
+    noStroke()
+    translate(this.x / this.c, this.y / this.c)
+    fill('#4DAD32')
+
+    rect(-5, 0, 10, 120);
+
+    fill(255, this.a, this.b)
+    rotate(PI / 9)
+    flower()
+    fill('#FFEE34')
+    ellipse(0, 0, 30, 30)
+    pop();
+
+    function flower() {
+      beginShape();
+      for (let i = 0; i < 12; i++) {
+        ellipse(0, 30, 20, 80);
+        rotate(PI / 5.0);
+      }
+      endShape();
+
+    }
+  }
+  dis() {
+    push()
+    scale(this.c);
+    translate(this.x / this.c, this.y / this.c)
+    fill(255, this.a, this.b)
+    noStroke()
+    beginShape();
+    for (let i = 0; i < 12; i++) {
+      ellipse(0, 30, 20, 80);
+      rotate(PI / 5.0);
+    }
+    fill('#FFEE34')
+    ellipse(0, 0, 30, 30)
+    endShape();
+    pop()
+
+  }
+  
+  dis1() {
+    push()
+    scale(this.c);
+    translate(this.x / this.c, this.y / this.c)
+    fill(255, this.a, this.b)
+    noStroke()
+    beginShape();
+    for (let i = 0; i < 12; i++) {
+      ellipse(0, 30, 20, 80);
+      rotate(PI / 5.0);
+    }
+    fill('#FFEE34')
+    ellipse(0, 0, 30, 30)
+    endShape();
+    pop()
+    push()
+    stroke(0)
+    scale(this.c);
+    
+    translate(this.x / this.c, this.y / this.c+random(20)/20)
+    fill(0)
+  strokeWeight(10)
+  line(175,50,175,150)
+   line(275,60,275,160)
+  line(175,50,275,60)
+   line(175,60,275,70)
+  line(175,85,275,95)
+  ellipse(150,150,50,50)
+  ellipse(250,160,50,50)
+    pop()
+
+  }
+
+
+}
+
+
+
 class Cute {
   constructor(x, y, a) {
     this.x = x;
@@ -448,6 +617,36 @@ class Cute {
     this.heart();
     this.hands();
     pop();
+      push()
+    scale(this.a);
+    translate((this.x) / this.a+80, (this.y) / this.a+80)
+    fill(255, 163, 204)
+    noStroke()
+    beginShape();
+    for (let i = 0; i < 12; i++) {
+      ellipse(0, 30, 20, 80);
+      rotate(PI / 5.0);
+    }
+    fill('#FFEE34')
+    ellipse(0, 0, 30, 30)
+    endShape();
+    pop()
+    push()
+    stroke(0)
+    scale(this.a);
+    
+    translate(this.x / this.a+400, this.y / this.a+random(20)/20)
+    fill(0)
+  strokeWeight(10)
+  line(175,50,175,150)
+   line(275,60,275,160)
+  line(175,50,275,60)
+   line(175,60,275,70)
+  line(175,85,275,95)
+  ellipse(150,150,50,50)
+  ellipse(250,160,50,50)
+    pop()
+
 
   }
   //tail
@@ -860,7 +1059,5 @@ class Cute {
     vertex(432, 388);
     quadraticVertex(421, 409, 393, 435);
     endShape();
-
   }
-
 }
