@@ -1,3 +1,6 @@
+//part of this code was inspired by https://editor.p5js.org/ARatherLongUsername/sketches/SkxeigFOX
+
+
 let paused, pla, fallingBlock, leng, speechW, speechC, cute, pand;
 
 const width = 10;
@@ -23,6 +26,7 @@ function preload() { // preload all the music/sound
 
 
 function setup() {
+
   speechW = new p5.SpeechRec('en-US'); // set up speech based on speechrec object
   speechW.continuous = true; // it is a continuous recognition
   speechW.interimResults = true; // make result become string
@@ -127,14 +131,25 @@ function draw() {
 }
 
 function windowResized() {
-  resizeCanvas(windowWidth,windowHeight);
-}
+  resizeCanvas(windowWidth,windowHeight);}
+
+
+
 
 function mouseDragged() {
+if (mouseIsPressed){
+  while (!pla.hasSpace(fallingBlock)) {
+      fallingBlock.up();
+    }
+  
+}
+  
+  
   if (score > 1) {
     if (mouseX < 0) {
       mouseX = 0
-    }
+    }if (mouseX>windowWidth){
+      mouseX=windowWidth}
     fallingBlock.x = round(map(mouseX, 0, windowWidth, 0, 10 - leng))
     while (!pla.hasSpace(fallingBlock)) {
       fallingBlock.up();
@@ -186,14 +201,14 @@ function newBlock() {
 function mouseClicked() {
 
   if (d === 1) {//cat help
-    let f = dist(909+windowWidth*0.1, 555, mouseX, mouseY)
+    let f = dist(300,300, mouseX-windowWidth / 2.3,  mouseY-200)
     if (f < 100 && f > -50) {
       e = 1
       d = 0
     }
   }
   if (g === 1) {// panda help
-    let f = dist(880+windowWidth*0.1, 340, mouseX, mouseY)
+    let f = dist(300, 140, mouseX-windowWidth / 2.3, mouseY-200)
     if (f < 100 && f > 0) {
       g = 3;
       h = 1;
@@ -332,30 +347,30 @@ class Playfield {
         rect(cs * x + bs, cs * y + bs, cs - 1, cs - 1);
       }
     }
-  } // end of display()
+  }
 
 
-
-  appear(block) {
+  appear(block) {// for the falling block, finally it colors the background
+    
     for (let y = 0; y < block.size; y++) {
       for (let x = 0; x < block.size; x++) {
         if (block.cells[y][x] != null) {
           let gridY = block.y + y;
           let gridX = block.x + x;
-          this.ge[gridY][gridX] =
+          this.ge[gridY][gridX] =//make the color on the screen
             block.cells[y][x];
         }
 
       }
     }
 
-  } //end of add
+  }
 
 
-  remove() {
+  remove() {//if the line is full(no foreground) it removes.
     for (let y = this.y - 1; y >= 0; y--) {
       // if this row is full
-      if (!this.ge[y].includes(this.foreground)) {
+      if (this.ge[y].indexOf(this.foreground)===-1) {
         // remove the row
         this.ge.splice(y, 1)
         e = 0
@@ -377,7 +392,7 @@ class Playfield {
 
   }
 
-  hasSpace(block) {
+  hasSpace(block) {// to check if there is space for block, first, it should falls in the playfield, if not, false
 
     for (let y = 0; y < block.size; y++) {
       for (let x = 0; x < block.size; x++) {
@@ -386,18 +401,18 @@ class Playfield {
           let gridX = block.x + x;
           if (gridY < 0 || gridY >= this.y ||
             gridX < 0 || gridX >= this.x ||
-            this.ge[gridY][gridX] != this.foreground) {
-            return false;
-          }
+            this.ge[gridY][gridX] != this.foreground){//foreground means space, if there is no foreground, there is no space.
+            return false;}
         }
       }
     }
-
+  
+  
     return true;
-
+  
   }
-
 }
+
 
 class Block {
 
@@ -426,15 +441,15 @@ class Block {
 
 
   timeToFall() {
-    return this.timeB > this.tim
+    return this.timeB > this.tim// true or false
 
   }
 
   resetTime() {
-    this.timeB = 0;
+    this.timeB = 0;//make pause, cuz 0 is smaller than 1000.
   }
 
-  display() {
+  display() {// for this 2d array, draw each positon rectangle to form the block
 
     for (let y1 = 0; y1 < this.size; y1++) {
       for (let x1 = 0; x1 < this.size; x1++) {
@@ -468,7 +483,7 @@ class Block {
 }
 
 
-//set up the blocks types by arrays with color
+//set up the blocks types by matrix with color(this matrix must be squared)
 let types = {
   1: [
     ['#AAF7FF']
